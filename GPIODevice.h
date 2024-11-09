@@ -19,21 +19,19 @@ public:
   static constexpr uint8_t GPIOE_EXTI = 0x04;
   // Other members...
 
-  enum class Mode { Output, Input, Unchanged }; // TODO: Add alternate function mode, analog mode
+  enum class Mode { Output, Input, AlternateFunction, Unchanged };
   enum class OutputType { PushPull, OpenDrain, Unchanged };
   enum class Speed { Low, Medium, High, Unchanged };
   enum class Pull { NoPull, PullUp, PullDown, Unchanged };
 
-  GPIODevice(GPIO_TypeDef* port);  // Constructor to initialize the GPIO port and pin
+  GPIODevice(GPIO_TypeDef* port);  
   GPIODevice(GPIO_TypeDef* port, uint16_t pin);
   virtual ~GPIODevice() = default;          // Virtual destructor for proper cleanup
-  void configurePin(uint16_t pin, Mode mode, OutputType outputType, Speed speed, Pull pull); // Generalized configuration
+  void configurePin(uint16_t pin, Mode mode, OutputType outputType, Speed speed, Pull pull, uint8_t alternateFunction = 0); // Generalized configuration
 
-//  virtual void init() = 0;                  // Pure virtual function for initializing the device
 
 protected:
   GPIO_TypeDef* _port;
-  //uint32_t _port;                           // GPIO Port (e.g., GPIOA, GPIOB)
   uint16_t currentPin;
 
   void enableClock();                       // Method to enable clock for the GPIO port

@@ -31,7 +31,6 @@ GPIODevice::GPIODevice(GPIO_TypeDef* port, uint16_t pin)
 
 void GPIODevice::enableClock()
 {
-  // Enable the clock for the corresponding GPIO port
   if (_port == GPIOA) {
     __HAL_RCC_GPIOA_CLK_ENABLE();
   }
@@ -64,18 +63,33 @@ void GPIODevice::configurePin(uint16_t pin, Mode mode, OutputType outputType, Sp
   if (outputType != OutputType::Unchanged) setOutputType(outputType);
   if (speed != Speed::Unchanged) setSpeed(speed);
   if (pull != Pull::Unchanged) setPull(pull);
+
+  // Configure alternate function if the mode is AlternateFunction
+  if (mode == Mode::AlternateFunction) {
+    if (pin < 8) {
+      // Set alternate function in AFRL (low register for pins 0-7)
+      _port->AFR[0] &= ~(0xF << (pin * 4));             // Clear bits
+      _port->AFR[0] |= (alternateFunction << (pin * 4)); // Set alternate function
+    } else {
+      // Set alternate function in AFRH (high register for pins 8-15)
+      _port->AFR[1] &= ~(0xF << ((pin - 8) * 4));             // Clear bits
+      _port->AFR[1] |= (alternateFunction << ((pin - 8) * 4)); // Set alternate function
+    }
+  }
 }
 
 void GPIODevice::setMode(Mode mode)
 {
-  if (mode == Mode::Output)
-  {
-    _port->MODER &= ~(1 << (currentPin * 2 + 1));
-    _port->MODER |= (1 << (currentPin * 2)); // Output mode
+  if (mode == Mode::Output) {
+    _port->MODER &= ~(3UL << (currentPin * 2));    // Clear both bits for the pin
+    _port->MODER |= (1UL << (currentPin * 2));     // Set to output mode
   }
-  else if (mode == Mode::Input)
-  {
-    _port->MODER &= ~(3UL << (currentPin * 2)); // Input mode
+  else if (mode == Mode::Input) {
+    _port->MODER &= ~(3UL << (currentPin * 2));    // Clear both bits to set input mode
+  }
+  else if (mode == Mode::AlternateFunction) {
+    _port->MODER &= ~(3UL << (currentPin * 2));    // Clear both bits for the pin
+    _port->MODER |= (2UL << (currentPin * 2));     // Set to alternate function mode
   }
 }
 
@@ -89,7 +103,6 @@ void GPIODevice::setOutputType(OutputType outputType)
   {
     _port->OTYPER |= (1UL << currentPin);  // Open-drain
   }
-  // Add similar checks for GPIOB and GPIOC
 }
 
 void GPIODevice::setSpeed(Speed speed)
@@ -107,7 +120,6 @@ void GPIODevice::setSpeed(Speed speed)
   {
      _port->OSPEEDR |= (3UL << (currentPin * 2)); // High speed
   }
-  // Add similar checks for GPIOB and GPIOC
 }
 
 void GPIODevice::setPull(Pull pull)
@@ -125,7 +137,6 @@ void GPIODevice::setPull(Pull pull)
   {
     _port->PUPDR |= (3UL << (currentPin * 2)); // Pull-down
   }
-  // Add similar checks for GPIOB and GPIOC
 }
 //GPIODevice::GPIODevice() {
 //	// TODO Auto-generated constructor stub
