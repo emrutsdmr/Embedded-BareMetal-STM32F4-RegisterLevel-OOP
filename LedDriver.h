@@ -14,9 +14,7 @@ class LedDriver: public GPIODevice {
 public:
   enum class LedState { ON, OFF };
 
-//  LedDriver(GPIO_TypeDef* port);   // Constructor
   LedDriver(GPIO_TypeDef* port, uint16_t pin = 5);   // Constructor
-//  virtual void init() override;             // Initialize LED (override base class)
 
   void toggle();                            // Toggle LED state
   void toggle(uint16_t pin);                            // Toggle LED state

@@ -27,12 +27,12 @@ public:
   GPIODevice(GPIO_TypeDef* port);  
   GPIODevice(GPIO_TypeDef* port, uint16_t pin);
   virtual ~GPIODevice() = default;          // Virtual destructor for proper cleanup
-  void configurePin(uint16_t pin, Mode mode, OutputType outputType, Speed speed, Pull pull, uint8_t alternateFunction = 0); // Generalized configuration
+  void configurePin(Mode mode, OutputType outputType, Speed speed, Pull pull, uint8_t alternateFunction = 0); // Generalized configuration
 
 
 protected:
   GPIO_TypeDef* _port;
-  uint16_t currentPin;
+  uint16_t _currentPin;
 
   void enableClock();                       // Method to enable clock for the GPIO port
 

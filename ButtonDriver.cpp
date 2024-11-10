@@ -8,24 +8,17 @@
 #include "ButtonDriver.h"
 
 ButtonDriver::ButtonDriver(GPIO_TypeDef* port)
-    : GPIODevice(port){}
+    : GPIODevice(port), _currentPin(13) {}
 ButtonDriver::ButtonDriver(GPIO_TypeDef* port, uint16_t pin)
     : GPIODevice(port, pin)
 {
-  configurePin(pin, Mode::Input, OutputType::PushPull, Speed::Low, Pull::NoPull);  // Configure pin for button input
-//  init();
+  configurePin(Mode::Input, OutputType::PushPull, Speed::Low, Pull::NoPull);  // Configure pin for button input
 }
-
-//void ButtonDriver::init()
-//{
-//  enableClock();  // Enable the clock for the GPIO port
-//  configure(Mode::Input, OutputType::PushPull, Speed::Low, Pull::NoPull);  // Configure pin for button input
-//}
 
 ButtonDriver::ButtonState ButtonDriver::getState(uint16_t pin) const
 {
   // Read the state of the button
-  if ((GPIOC->IDR & (1 << pin)) != 0)
+  if ((_port->IDR & (1 << pin)) != 0)
   {
       return ButtonState::OFF;
   }
@@ -38,7 +31,7 @@ ButtonDriver::ButtonState ButtonDriver::getState(uint16_t pin) const
 ButtonDriver::ButtonState ButtonDriver::getState() const
 {
   // Read the state of the button
-  if ((GPIOC->IDR & (1 << currentPin)) != 0)
+  if ((_port->IDR & (1 << _currentPin)) != 0)
   {
       return ButtonState::OFF;
   }
@@ -89,7 +82,7 @@ void ButtonDriver::enableInterrupt(uint16_t pin, uint32_t priority)
     }
   }
 }
-
+// TODO: Implement interrupt handler for button press/release.
 //extern "C" void EXTI15_10_IRQHandler(void)
 //{
 //    if ((EXTI->PR & EXTI_PR_PR13) != 0) {

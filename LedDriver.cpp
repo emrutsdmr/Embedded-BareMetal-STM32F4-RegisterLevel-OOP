@@ -7,24 +7,15 @@
 
 #include "LedDriver.h"
 
-//LedDriver::LedDriver(GPIO_TypeDef* port)
-//    : GPIODevice(port){}
 LedDriver::LedDriver(GPIO_TypeDef* port, uint16_t pin)
     : GPIODevice(port)
 {
-  configurePin(pin, Mode::Output, OutputType::PushPull, Speed::High, Pull::NoPull); // Configure pin for LED output
-//    init();
+  configurePin(Mode::Output, OutputType::PushPull, Speed::High, Pull::NoPull); // Configure pin for LED output
 }
-
-//void LedDriver::init()
-//{
-//    enableClock();  // Enable the clock for the GPIO port
-//    configure(Mode::Output, OutputType::PushPull, Speed::High, Pull::NoPull); // Configure pin for LED output
-//}
 
 void LedDriver::toggle()
 {
-  _port->ODR ^= (1 << currentPin);
+  _port->ODR ^= (1 << _currentPin);
 }
 
 void LedDriver::toggle(uint16_t pin)
@@ -36,11 +27,11 @@ void LedDriver::set(LedState state)
 {
   if (state == LedState::ON)
   {
-    _port->BSRR = (1 << currentPin); // Set pin
+    _port->BSRR = (1 << _currentPin); // Set pin
   }
   else
   {
-    _port->BSRR = (1 << (currentPin + 16));  // Reset pin
+    _port->BSRR = (1 << (_currentPin + 16));  // Reset pin
   }
 }
 
