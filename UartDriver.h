@@ -21,14 +21,14 @@ class UartDriver {
     void enableRXInterrupt();
     void sendByte(uint8_t data);
     void sendByteArray(uint8_t* buffer, uint32_t size);
-    int32_t readByte();
-    uint32_t bytesToRead();
+//    int32_t readByte();
+//    uint32_t bytesToRead();
 
     // Buffer structures
     struct UART_Buffer {
       uint32_t buffer[BUFFER_SIZE];
-      uint32_t head = 0;
-      uint32_t tail = 0;
+      volatile uint32_t head = 0;
+      volatile uint32_t tail = 0;
     };
 
   private:
@@ -38,10 +38,10 @@ class UartDriver {
     UART_Buffer _rxBuffer;
     UART_Buffer _txBuffer;
 
-    bool isBufferEmpty(UART_Buffer* buffer) const;
+//    bool isBufferEmpty(UART_Buffer* buffer) const;
     void errorHandler();
 
-    static void UART_IRQ_Handler(UartDriver* driver);
+//    static void UART_IRQ_Handler(UartDriver* driver);
 };
 
 #endif /* SRC_UARTDRIVER_H_ */

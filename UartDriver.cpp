@@ -43,8 +43,39 @@ void UartDriver::initialize(uint32_t baudRate)
   _uartHandle.Init.Mode = UART_MODE_TX_RX;
 
   if (HAL_UART_Init(&_uartHandle) != HAL_OK) {
-    //TODO: errorHandler();
+    errorHandler();
   }
 
-  //TODO: enableRXInterrupt();
+  enableRXInterrupt();
 }
+
+void UartDriver::enableRXInterrupt()
+{
+  SET_BIT(_uartHandle.Instance->CR1, USART_CR1_RXNEIE);
+  HAL_NVIC_SetPriority(USART2_IRQn, 0, 1);
+  HAL_NVIC_EnableIRQ(USART2_IRQn);
+}
+
+void UartDriver::errorHandler()
+{
+  while (1) {
+    // TODO: Loop to indicate an error
+  }
+}
+
+void UartDriver::sendByte(uint8_t data)
+{
+  _txBuffer.buffer[_txBuffer.head++] = data;
+  if (_txBuffer.head == BUFFER_SIZE) {
+    _txBuffer.head = 0;
+  }
+  SET_BIT(_uartHandle.Instance->CR1, USART_CR1_TXEIE);
+}
+
+void UartDriver::sendByteArray(uint8_t* buffer, uint32_t size)
+{
+  for (uint32_t i = 0; i < size; i++) {
+    sendByte(buffer[i]);
+  }
+}
+
