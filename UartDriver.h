@@ -21,8 +21,8 @@ class UartDriver {
     void enableRXInterrupt();
     void sendByte(uint8_t data);
     void sendByteArray(uint8_t* buffer, uint32_t size);
-//    int32_t readByte();
-//    uint32_t bytesToRead();
+    int32_t readByte();
+    uint32_t bytesToRead();
 
     // Buffer structures
     struct UART_Buffer {
@@ -38,7 +38,7 @@ class UartDriver {
     UART_Buffer _rxBuffer;
     UART_Buffer _txBuffer;
 
-//    bool isBufferEmpty(UART_Buffer* buffer) const;
+    bool isBufferEmpty(UART_Buffer* buffer) const;
     void errorHandler();
 
 //    static void UART_IRQ_Handler(UartDriver* driver);

@@ -79,3 +79,30 @@ void UartDriver::sendByteArray(uint8_t* buffer, uint32_t size)
   }
 }
 
+int32_t UartDriver::readByte()
+{
+  if (isBufferEmpty(&_rxBuffer)) {
+    return -1;
+  }
+  uint8_t data = _rxBuffer.buffer[_rxBuffer.tail++];
+  if (_rxBuffer.tail == BUFFER_SIZE) {
+    _rxBuffer.tail = 0;
+  }
+  return data;
+}
+
+uint32_t UartDriver::bytesToRead()
+{
+  if (_rxBuffer.head >= _rxBuffer.tail) {
+    return _rxBuffer.head - _rxBuffer.tail;
+  }
+  else {
+    return (BUFFER_SIZE + _rxBuffer.head - _rxBuffer.tail);
+  }
+}
+
+bool UartDriver::isBufferEmpty(volatile UART_Buffer* buffer) const
+{
+  return buffer->head == buffer->tail;
+}
+
