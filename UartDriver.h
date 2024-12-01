@@ -31,6 +31,8 @@ class UartDriver {
       volatile uint32_t tail = 0;
     };
 
+    static void UART_IRQ_Handler(UartDriver* driver);
+
   private:
     GPIODevice _txPin;
     GPIODevice _rxPin;
@@ -40,8 +42,6 @@ class UartDriver {
 
     bool isBufferEmpty(volatile UART_Buffer* buffer) const;
     void errorHandler();
-
-    static void UART_IRQ_Handler(UartDriver* driver);
 };
 
 #endif /* SRC_UARTDRIVER_H_ */
