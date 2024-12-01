@@ -53,7 +53,7 @@ void GPIODevice::enableClock()
 
 }
 
-void GPIODevice::configurePin(Mode mode, OutputType outputType, Speed speed, Pull pull)
+void GPIODevice::configurePin(Mode mode, OutputType outputType, Speed speed, Pull pull, uint8_t alternateFunction)
 {
   if (mode != Mode::Unchanged) setMode(mode);
   if (outputType != OutputType::Unchanged) setOutputType(outputType);
@@ -61,7 +61,7 @@ void GPIODevice::configurePin(Mode mode, OutputType outputType, Speed speed, Pul
   if (pull != Pull::Unchanged) setPull(pull);
 
   // Configure alternate function if the mode is AlternateFunction
-  if (mode == Mode::AlternateFunction) {
+  if (mode == Mode::AlternateFunction && alternateFunction < 16) {
     if (_currentPin < 8) {
       // Set alternate function in AFRL (low register for _currentPin 0-7)
       _port->AFR[0] &= ~(0xF << (_currentPin * 4));             // Clear bits

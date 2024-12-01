@@ -8,7 +8,7 @@
 #include "ButtonDriver.h"
 
 ButtonDriver::ButtonDriver(GPIO_TypeDef* port)
-    : GPIODevice(port), _currentPin(13) {}
+    : GPIODevice(port, 13) {}
 ButtonDriver::ButtonDriver(GPIO_TypeDef* port, uint16_t pin)
     : GPIODevice(port, pin)
 {
