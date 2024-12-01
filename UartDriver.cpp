@@ -106,3 +106,34 @@ bool UartDriver::isBufferEmpty(volatile UART_Buffer* buffer) const
   return buffer->head == buffer->tail;
 }
 
+void UartDriver::UART_IRQ_Handler(UartDriver* driver)
+{
+  uint32_t isrflags = driver->_uartHandle.Instance->ISR;
+  uint32_t cr1 = driver->_uartHandle.Instance->CR1;
+
+  if (((isrflags & USART_ISR_RXNE) != 0) && ((cr1 & USART_CR1_RXNEIE) != 0)) {
+    driver->_rxBuffer.buffer[driver->_rxBuffer.head++] = driver->_uartHandle.Instance->RDR;
+    if (driver->_rxBuffer.head == BUFFER_SIZE) {
+      driver->_rxBuffer.head = 0;
+    }
+  }
+
+  if (((isrflags & USART_ISR_TXE) != 0) && ((cr1 & USART_CR1_TXEIE) != 0)) {
+    if (driver->_txBuffer.head != driver->_txBuffer.tail) {
+      driver->_uartHandle.Instance->TDR = driver->_txBuffer.buffer[driver->_txBuffer.tail++];
+      if (driver->_txBuffer.tail == BUFFER_SIZE) {
+        driver->_txBuffer.tail = 0;
+      }
+    }
+    else {
+      CLEAR_BIT(driver->_uartHandle.Instance->CR1, USART_CR1_TXEIE);
+    }
+  }
+}
+
+// Extern C function to call from IRQ
+extern "C" void USART2_IRQHandler()
+{
+  UartDriver::UART_IRQ_Handler(/* pass an instance of UartDriver */);
+}
+

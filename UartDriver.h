@@ -38,10 +38,10 @@ class UartDriver {
     UART_Buffer _rxBuffer;
     UART_Buffer _txBuffer;
 
-    bool isBufferEmpty(UART_Buffer* buffer) const;
+    bool isBufferEmpty(volatile UART_Buffer* buffer) const;
     void errorHandler();
 
-//    static void UART_IRQ_Handler(UartDriver* driver);
+    static void UART_IRQ_Handler(UartDriver* driver);
 };
 
 #endif /* SRC_UARTDRIVER_H_ */
