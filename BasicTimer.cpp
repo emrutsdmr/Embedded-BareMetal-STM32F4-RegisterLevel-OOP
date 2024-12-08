@@ -6,6 +6,10 @@
  */
 
 #include "BasicTimer.h"
+#include "LedDriver.h"
+
+// Create a global instance for the LED driver
+LedDriver led(GPIOA, 5);
 
 BasicTimer::BasicTimer(TIM_TypeDef* timer)
   : _timer(timer) {
@@ -48,3 +52,21 @@ void BasicTimer::disable() {
 uint16_t BasicTimer::getCounterValue() const {
   return _timer->CNT;
 }
+
+void BasicTimer::IRQHandler(TIM_TypeDef* timer) {
+  if (timer->SR & TIM_SR_UIF) {
+    timer->SR &= ~TIM_SR_UIF; // Clear the update interrupt flag
+    // Toggle the LED using LedDriver
+    led.toggle();
+  }
+}
+// Interrupt handler for TIM6
+extern "C" void TIM6_DAC_IRQHandler() {
+  BasicTimer::IRQHandler(TIM6);
+}
+
+// Interrupt handler for TIM7
+extern "C" void TIM7_IRQHandler() {
+  BasicTimer::IRQHandler(TIM7);
+}
+
