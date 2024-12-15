@@ -16,13 +16,6 @@ GeneralTimer::GeneralTimer(TIM_TypeDef* timer, Mode mode, uint32_t prescaler, ui
   _timer->PSC = prescaler;
   _timer->ARR = period - 1;
 
-  // Configure mode-specific settings
-  if (_mode == Mode::UpCounter) {
-    _timer->CR1 &= ~TIM_CR1_DIR; // Up-counter
-  } else if (_mode == Mode::DownCounter) {
-    _timer->CR1 |= TIM_CR1_DIR; // Down-counter
-  }
-
   // Enable Timer Update Interrupt if necessary
   _timer->DIER |= TIM_DIER_UIE;
 }
@@ -34,25 +27,76 @@ void GeneralTimer::enableClock() {
     else if (_timer == TIM5) __HAL_RCC_TIM5_CLK_ENABLE();
 }
 
+void GeneralTimer::enableChannelOutput(uint32_t channel) {
+    // Enable output for the given channel (CCER register)
+    _timer->CCER |= (1 << ((channel - 1) * 4));  // Enable output for the selected channel
+}
+
+void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValue) {
+    uint32_t ccmrRegister = 0;
+    uint32_t ccmrMask = 0;
+    // Set appropriate registers based on the channel number
+    if (channel == 1) {
+	      _timer->CCMR1 &= ~TIM_CCMR1_CC1S;
+        ccmrRegister = (uint32_t)&_timer->CCMR1;
+        ccmrMask = TIM_CCMR1_OC1M;
+        _timer->CCR1 = compareValue;  // Set the pulse width for Channel 1
+    } else if (channel == 2) {
+	      _timer->CCMR1 &= ~TIM_CCMR1_CC2S;
+        ccmrRegister = (uint32_t)&_timer->CCMR1;
+        ccmrMask = TIM_CCMR1_OC2M;
+        _timer->CCR2 = compareValue;  // Set the pulse width for Channel 1
+    } else if (channel == 3) {
+	      _timer->CCMR2 &= ~TIM_CCMR1_CC1S;
+        ccmrRegister = (uint32_t)&_timer->CCMR2;
+        ccmrMask = TIM_CCMR2_OC3M;
+        _timer->CCR3 = compareValue;  // Set the pulse width for Channel 1
+    } else if (channel == 4) {
+	      _timer->CCMR1 &= ~TIM_CCMR1_CC2S;
+        ccmrRegister = (uint32_t)&_timer->CCMR2;
+        ccmrMask = TIM_CCMR2_OC4M;
+        _timer->CCR4 = compareValue;  // Set the pulse width for Channel 1
+    }
+    // Clear existing mode and set new mode
+    *((volatile uint32_t*)ccmrRegister) &= ~ccmrMask;
+    *((volatile uint32_t*)ccmrRegister) |= mode;
+
+    // Enable the channel output (CCER register)
+    enableChannelOutput(channel);
+}
+
 void GeneralTimer::configurePWM(uint32_t channel, uint32_t pulse) {
-  // Set mode to PWM
-  _timer->CCMR1 |= TIM_CCMR1_OC1M_PWM1; // PWM mode 1 for Channel 1
-  _timer->CCR1 = pulse;                 // Set pulse width
-  _timer->CCER |= TIM_CCER_CC1E;        // Enable channel 1 output
+    // Set PWM mode (Mode 1) for the given channel
+    if (channel == 1) {
+	      _timer->CCMR1 &= ~TIM_CCMR1_CC1S;
+        _timer->CCMR1 &= ~TIM_CCMR1_OC1M;  // Clear previous mode
+        _timer->CCMR1 |= TIM_CCMR1_OC1M_PWM1;  // Set PWM Mode 1 for Channel 1
+        _timer->CCR1 = pulse;  // Set the pulse width for Channel 1
+    } else if (channel == 2) {
+	      _timer->CCMR1 &= ~TIM_CCMR1_CC2S;
+        _timer->CCMR1 &= ~TIM_CCMR1_OC2M;  // Clear previous mode
+        _timer->CCMR1 |= TIM_CCMR1_OC2M_PWM1;  // Set PWM Mode 1 for Channel 2
+        _timer->CCR2 = pulse;  // Set the pulse width for Channel 2
+    } else if (channel == 3) {
+	      _timer->CCMR2 &= ~TIM_CCMR1_CC1S;
+        _timer->CCMR2 &= ~TIM_CCMR2_OC3M;  // Clear previous mode
+        _timer->CCMR2 |= TIM_CCMR2_OC3M_PWM1;  // Set PWM Mode 1 for Channel 3
+        _timer->CCR3 = pulse;  // Set the pulse width for Channel 3
+    } else if (channel == 4) {
+	      _timer->CCMR2 &= ~TIM_CCMR1_CC2S;
+        _timer->CCMR2 &= ~TIM_CCMR2_OC4M;  // Clear previous mode
+        _timer->CCMR2 |= TIM_CCMR2_OC4M_PWM1;  // Set PWM Mode 1 for Channel 4
+        _timer->CCR4 = pulse;  // Set the pulse width for Channel 4
+    }
+
+    // Enable output for the channel
+    enableChannelOutput(channel);
 }
 
 void GeneralTimer::configureInputCapture(uint32_t channel) {
   if (channel == 1) {
     _timer->CCMR1 |= TIM_CCMR1_CC1S_0;  // Input capture on TI1
     _timer->CCER |= TIM_CCER_CC1E;      // Enable capture
-  }
-}
-
-void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValue) {
-  if (channel == 1) {
-    _timer->CCMR1 |= TIM_CCMR1_OC1M;    // Output compare mode
-    _timer->CCR1 = compareValue;        // Set compare value
-    _timer->CCER |= TIM_CCER_CC1E;      // Enable output
   }
 }
 
