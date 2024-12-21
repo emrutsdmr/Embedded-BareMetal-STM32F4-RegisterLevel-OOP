@@ -43,7 +43,7 @@ BasicTimer::BasicTimer(TIM_TypeDef* timer, uint32_t prescaler, uint32_t period_m
 }
 
 void BasicTimer::configureTimer(uint32_t prescaler, uint32_t period_ms) {
-  _timer->PSC = prescaler;
+  _timer->PSC = prescaler - 1;
   _timer->ARR = period_ms - 1;
 }
 
@@ -52,7 +52,7 @@ void BasicTimer::setPeriod(uint16_t period_ms) {
 }
 
 void BasicTimer::setPrescaler(uint32_t prescaler) {
-  _timer->PSC = prescaler;
+  _timer->PSC = prescaler - 1;
 }
 
 void BasicTimer::enable() {

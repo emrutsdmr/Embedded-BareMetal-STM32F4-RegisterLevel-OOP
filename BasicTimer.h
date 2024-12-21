@@ -39,7 +39,7 @@ public:
 private:
   TIM_TypeDef* _timer;// Pointer to the selected timer (TIM6 or TIM7)
 
-  static constexpr uint32_t DEFAULT_PSC = 47999;     // Default prescaler (48 MHz -> 1 kHz)
+  static constexpr uint32_t DEFAULT_PSC = 48000;     // Default prescaler (48 MHz -> 1 kHz)
   static constexpr uint32_t DEFAULT_PERIOD_MS = 100; // Default period (100 ms)
 
   void configureTimer(uint32_t prescaler, uint32_t period_ms); // Internal configuration helper
