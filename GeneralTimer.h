@@ -13,7 +13,26 @@
 class GeneralTimer {
 public:
   // Timer Modes
-  enum class Mode { UpCounter, DownCounter, OutpuCompare, PWM, InputCapture, Encoder };
+  enum class Mode { 
+    OutputCompare, 
+    InputCapture, 
+    //UpCounter, 
+    //DownCounter, 
+    //PWM, 
+    //Encoder 
+  };
+
+  // Output Compare Modes
+  enum class OCMode {
+    Frozen = 0b000,
+    SetActive = 0b001,
+    SetInactive = 0b010,
+    Toggle = 0b011,
+    ForceInactive = 0b100,
+    ForceActive = 0b101,
+    PWMMode1 = 0b110,
+    PWMMode2 = 0b111
+  };
 
   GeneralTimer(TIM_TypeDef* timer, Mode mode, uint32_t prescaler = DEFAULT_PSC, uint32_t period = DEFAULT_PERIOD);
 
