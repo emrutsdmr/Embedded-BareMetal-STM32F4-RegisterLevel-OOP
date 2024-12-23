@@ -13,14 +13,14 @@
 class GeneralTimer {
 public:
   // Timer Modes
-  enum class Mode { 
-    OutputCompare, 
-    InputCapture, 
-    //UpCounter, 
-    //DownCounter, 
-    //PWM, 
-    //Encoder 
-  };
+//  enum class Mode {
+//    OutputCompare,
+//    InputCapture,
+//    UpCounter,
+//    DownCounter,
+//    PWM,
+//    Encoder
+//  };
 
   // Output Compare Modes
   enum class OCMode {
@@ -34,12 +34,11 @@ public:
     PWMMode2 = 0b111
   };
 
-  GeneralTimer(TIM_TypeDef* timer, Mode mode, uint32_t prescaler = DEFAULT_PSC, uint32_t period = DEFAULT_PERIOD);
+  GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler = DEFAULT_PSC, uint32_t period = DEFAULT_PERIOD);
 
   // Configure timer channels for specific functionality
-  void configurePWM(uint32_t channel, uint32_t pulse);
   void configureInputCapture(uint32_t channel);
-  void configureOutputCompare(uint32_t channel, uint32_t compareValue);
+  void configureOutputCompare(uint32_t channel, uint32_t compareValue, OCMode ocMode);
 
   // Setters
   void setPeriod(uint32_t period);
@@ -59,7 +58,7 @@ private:
   TIM_TypeDef* _timer;
   Mode _mode;
 
-  static constexpr uint32_t DEFAULT_PSC    = 47999; // Default prescaler (48 MHz -> 1 kHz)
+  static constexpr uint32_t DEFAULT_PSC    = 48000; // Default prescaler (48 MHz -> 1 kHz)
   static constexpr uint32_t DEFAULT_PERIOD = 1000;  // Default period (1 second)
 
   void enableClock();              // Enable the timer's clock

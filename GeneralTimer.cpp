@@ -7,13 +7,13 @@
 
 #include "GeneralTimer.h"
 
-GeneralTimer::GeneralTimer(TIM_TypeDef* timer, Mode mode, uint32_t prescaler, uint32_t period)
-  : _timer(timer), _mode(mode) {
+GeneralTimer::GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler, uint32_t period)
+  : _timer(timer) {
 
   enableClock();
 
   // Basic timer configuration
-  _timer->PSC = prescaler;
+  _timer->PSC = prescaler - 1;
   _timer->ARR = period - 1;
 
   // Enable Timer Update Interrupt if necessary
@@ -25,11 +25,6 @@ void GeneralTimer::enableClock() {
   else if (_timer == TIM3) __HAL_RCC_TIM3_CLK_ENABLE();
   else if (_timer == TIM4) __HAL_RCC_TIM4_CLK_ENABLE();
   else if (_timer == TIM5) __HAL_RCC_TIM5_CLK_ENABLE();
-}
-
-void GeneralTimer::enableChannelOutput(uint32_t channel) {
-  // Enable output for the given channel (CCER register)
-  _timer->CCER |= (1 << ((channel - 1) * 4));  // Enable output for the selected channel
 }
 
 void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValue, OCMode ocMode) {
@@ -79,11 +74,12 @@ void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValu
   *ccmrRegister &= ~ccmrMask;  // Clear OCxM bits for the selected channel
   *ccmrRegister |= (static_cast<uint32_t>(ocMode) << shiftValue);  // Set OCxM to the selected mode
 
-  // Enable the channel output (CCER register)
-  enableChannelOutput(channel);
+  // Enable output for the given channel (CCER register)
+  _timer->CCER |= (1 << ((channel - 1) * 4));
 }
 
 void GeneralTimer::configureInputCapture(uint32_t channel) {
+//TODO write it later
   if (channel == 1) {
     _timer->CCMR1 |= TIM_CCMR1_CC1S_0;  // Input capture on TI1
     _timer->CCER |= TIM_CCER_CC1E;      // Enable capture
@@ -95,7 +91,7 @@ void GeneralTimer::setPeriod(uint32_t period) {
 }
 
 void GeneralTimer::setPrescaler(uint32_t prescaler) {
-  _timer->PSC = prescaler;
+  _timer->PSC = prescaler - 1;
 }
 
 void GeneralTimer::setCounterValue(uint32_t value) {
