@@ -9,6 +9,7 @@
 #define SRC_GENERALTIMER_H_
 
 #include "stm32f4xx_hal.h"
+#include "GPIODevice.h"
 #include <map>
 #include <vector>
 #include <string>
@@ -28,12 +29,14 @@ public:
   };
 
   struct TimerChannelPin {
-    std::string port;         // GPIO Port name
-    uint16_t pin;             // GPIO Pin number
+    GPIO_TypeDef* port;        // GPIO Port name
+    uint16_t pin;              // GPIO Pin number
     uint8_t alternateFunction; // Alternate Function
   };
 
   GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler = DEFAULT_PSC, uint32_t period = DEFAULT_PERIOD);
+
+  void configureChannelPins();
 
   // Configure timer channels for specific functionality
   void configureInputCapture(uint32_t channel);
@@ -63,7 +66,7 @@ private:
   void configureTimer();           // Internal helper to configure the timer
 
   // Static map for timer-channel GPIO pin mapping
-  static const std::map<std::string, std::map<std::string, std::vector<TimerChannelPin>>> timerChannelMap;
+  static const std::map<TIM_TypeDef*, std::map<std::string, std::vector<TimerChannelPin>>> timerChannelMap;
 };
 
 #endif /* SRC_GENERALTIMER_H_ */

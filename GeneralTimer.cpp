@@ -8,26 +8,26 @@
 #include "GeneralTimer.h"
 
 // Static map initialization
-const std::map<std::string, std::map<std::string, std::vector<GeneralTimer::TimerChannelPin>>> GeneralTimer::timerChannelMap = {
-  {"TIM2", {
+const std::map<TIM_TypeDef*, std::map<std::string, std::vector<GeneralTimer::TimerChannelPin>>> GeneralTimer::timerChannelMap = {
+  {TIM2, {
     {"CH1", {{ GPIOA, GPIO_PIN_0, GPIO_AF1_TIM2 }, { GPIOA, GPIO_PIN_15, GPIO_AF1_TIM2 }}},
     {"CH2", {{ GPIOA, GPIO_PIN_1, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_3,  GPIO_AF1_TIM2 }}},
     {"CH3", {{ GPIOA, GPIO_PIN_2, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_10, GPIO_AF1_TIM2 }}},
     {"CH4", {{ GPIOA, GPIO_PIN_3, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_11, GPIO_AF1_TIM2 }}}
   }},
-  {"TIM3", {
+  {TIM3, {
     {"CH1", {{ GPIOA, GPIO_PIN_6, GPIO_AF2_TIM3 }, { GPIOB, GPIO_PIN_4, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_6, GPIO_AF2_TIM3}}},
     {"CH2", {{ GPIOA, GPIO_PIN_7, GPIO_AF2_TIM3 }, { GPIOB, GPIO_PIN_5, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_7, GPIO_AF2_TIM3}}},
     {"CH3", {{ GPIOB, GPIO_PIN_0, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_8, GPIO_AF2_TIM3 }}},
     {"CH4", {{ GPIOB, GPIO_PIN_1, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_9, GPIO_AF2_TIM3 }}}
   }},
-  {"TIM4", {
+  {TIM4, {
     {"CH1", {{ GPIOB, GPIO_PIN_6, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_12, GPIO_AF2_TIM4 }}},
     {"CH2", {{ GPIOB, GPIO_PIN_7, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_13, GPIO_AF2_TIM4 }}},
     {"CH3", {{ GPIOB, GPIO_PIN_8, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_14, GPIO_AF2_TIM4 }}},
     {"CH4", {{ GPIOB, GPIO_PIN_9, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_15, GPIO_AF2_TIM4 }}}
   }},
-  {"TIM5", {
+  {TIM5, {
     {"CH1", {{ GPIOA, GPIO_PIN_0,  GPIO_AF2_TIM5 }}},
     {"CH2", {{ GPIOA, GPIO_PIN_1,  GPIO_AF2_TIM5 }}},
     {"CH3", {{ GPIOA, GPIO_PIN_2,  GPIO_AF2_TIM5 }}},
@@ -45,7 +45,7 @@ GeneralTimer::GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler, uint32_t peri
   _timer->ARR = period - 1;
 
   // Enable Timer Update Interrupt if necessary
-  _timer->DIER |= TIM_DIER_UIE;
+  //_timer->DIER |= TIM_DIER_UIE;
 }
 
 void GeneralTimer::enableClock() {
@@ -53,12 +53,44 @@ void GeneralTimer::enableClock() {
   else if (_timer == TIM3) __HAL_RCC_TIM3_CLK_ENABLE();
   else if (_timer == TIM4) __HAL_RCC_TIM4_CLK_ENABLE();
   else if (_timer == TIM5) __HAL_RCC_TIM5_CLK_ENABLE();
+  else return; // Unsupported timer
+}
+
+void GeneralTimer::configureChannelPins() {
+
+  // Ensure the timer exists in the map
+  if (timerChannelMap.find(_timer) == timerChannelMap.end()) {
+    return;
+  }
+
+  // Iterate over each channel for the timer
+  for (const auto& channel : timerChannelMap.at(_timer)) {
+    //const std::string& channelName = channel.first;
+    const auto& pinConfigs = channel.second;
+
+    // Use only the first pin configuration for the channel
+    if (!pinConfigs.empty()) {
+      const auto& pinConfig = pinConfigs.front(); // Select the first pin configuration
+      GPIO_TypeDef* gpioPort = pinConfig.port;
+      uint16_t gpioPin = pinConfig.pin;
+      uint8_t alternateFunction = pinConfig.alternateFunction;
+
+      GPIODevice gpioDevice(gpioPort, gpioPin);
+      gpioDevice.configurePin(
+        GPIODevice::Mode::AlternateFunction,
+        GPIODevice::OutputType::PushPull,
+        GPIODevice::Speed::High,
+        GPIODevice::Pull::NoPull,
+        alternateFunction
+      );
+    }
+  }
 }
 
 void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValue, OCMode ocMode) {
-  uint32_t* ccmrRegister = nullptr;
+  volatile uint32_t* ccmrRegister = nullptr;
   uint32_t ccmrMask = 0;
-  uint32_t* ccrRegister = nullptr;
+  volatile uint32_t* ccrRegister = nullptr;
   uint32_t shiftValue = 0;
 
   switch (channel) {
