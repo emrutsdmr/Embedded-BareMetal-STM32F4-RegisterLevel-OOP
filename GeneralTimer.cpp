@@ -7,6 +7,34 @@
 
 #include "GeneralTimer.h"
 
+// Static map initialization
+const std::map<std::string, std::map<std::string, std::vector<GeneralTimer::TimerChannelPin>>> GeneralTimer::timerChannelMap = {
+  {"TIM2", {
+    {"CH1", {{ GPIOA, GPIO_PIN_0, GPIO_AF1_TIM2 }, { GPIOA, GPIO_PIN_15, GPIO_AF1_TIM2 }}},
+    {"CH2", {{ GPIOA, GPIO_PIN_1, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_3,  GPIO_AF1_TIM2 }}},
+    {"CH3", {{ GPIOA, GPIO_PIN_2, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_10, GPIO_AF1_TIM2 }}},
+    {"CH4", {{ GPIOA, GPIO_PIN_3, GPIO_AF1_TIM2 }, { GPIOB, GPIO_PIN_11, GPIO_AF1_TIM2 }}}
+  }},
+  {"TIM3", {
+    {"CH1", {{ GPIOA, GPIO_PIN_6, GPIO_AF2_TIM3 }, { GPIOB, GPIO_PIN_4, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_6, GPIO_AF2_TIM3}}},
+    {"CH2", {{ GPIOA, GPIO_PIN_7, GPIO_AF2_TIM3 }, { GPIOB, GPIO_PIN_5, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_7, GPIO_AF2_TIM3}}},
+    {"CH3", {{ GPIOB, GPIO_PIN_0, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_8, GPIO_AF2_TIM3 }}},
+    {"CH4", {{ GPIOB, GPIO_PIN_1, GPIO_AF2_TIM3 }, { GPIOC, GPIO_PIN_9, GPIO_AF2_TIM3 }}}
+  }},
+  {"TIM4", {
+    {"CH1", {{ GPIOB, GPIO_PIN_6, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_12, GPIO_AF2_TIM4 }}},
+    {"CH2", {{ GPIOB, GPIO_PIN_7, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_13, GPIO_AF2_TIM4 }}},
+    {"CH3", {{ GPIOB, GPIO_PIN_8, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_14, GPIO_AF2_TIM4 }}},
+    {"CH4", {{ GPIOB, GPIO_PIN_9, GPIO_AF2_TIM4 }, { GPIOD, GPIO_PIN_15, GPIO_AF2_TIM4 }}}
+  }},
+  {"TIM5", {
+    {"CH1", {{ GPIOA, GPIO_PIN_0,  GPIO_AF2_TIM5 }}},
+    {"CH2", {{ GPIOA, GPIO_PIN_1,  GPIO_AF2_TIM5 }}},
+    {"CH3", {{ GPIOA, GPIO_PIN_2,  GPIO_AF2_TIM5 }}},
+    {"CH4", {{ GPIOA, GPIO_PIN_3,  GPIO_AF2_TIM5 }}}
+  }}
+};
+
 GeneralTimer::GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler, uint32_t period)
   : _timer(timer) {
 
@@ -63,8 +91,7 @@ void GeneralTimer::configureOutputCompare(uint32_t channel, uint32_t compareValu
       shiftValue = 12;                      // OC4M bits are 12-14, so shift by 12
       break;
     default:
-      // Invalid channel, return or handle error
-      return;
+      return; // Invalid channel, return or handle error
   }
 
   // Set the compare value for the specified channel

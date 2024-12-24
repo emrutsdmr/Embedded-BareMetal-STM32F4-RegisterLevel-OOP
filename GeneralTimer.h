@@ -9,19 +9,12 @@
 #define SRC_GENERALTIMER_H_
 
 #include "stm32f4xx_hal.h"
+#include <map>
+#include <vector>
+#include <string>
 
 class GeneralTimer {
 public:
-  // Timer Modes
-//  enum class Mode {
-//    OutputCompare,
-//    InputCapture,
-//    UpCounter,
-//    DownCounter,
-//    PWM,
-//    Encoder
-//  };
-
   // Output Compare Modes
   enum class OCMode {
     Frozen = 0b000,
@@ -32,6 +25,12 @@ public:
     ForceActive = 0b101,
     PWMMode1 = 0b110,
     PWMMode2 = 0b111
+  };
+
+  struct TimerChannelPin {
+    std::string port;         // GPIO Port name
+    uint16_t pin;             // GPIO Pin number
+    uint8_t alternateFunction; // Alternate Function
   };
 
   GeneralTimer(TIM_TypeDef* timer, uint32_t prescaler = DEFAULT_PSC, uint32_t period = DEFAULT_PERIOD);
@@ -56,13 +55,15 @@ public:
 
 private:
   TIM_TypeDef* _timer;
-  Mode _mode;
 
   static constexpr uint32_t DEFAULT_PSC    = 48000; // Default prescaler (48 MHz -> 1 kHz)
   static constexpr uint32_t DEFAULT_PERIOD = 1000;  // Default period (1 second)
 
   void enableClock();              // Enable the timer's clock
   void configureTimer();           // Internal helper to configure the timer
+
+  // Static map for timer-channel GPIO pin mapping
+  static const std::map<std::string, std::map<std::string, std::vector<TimerChannelPin>>> timerChannelMap;
 };
 
 #endif /* SRC_GENERALTIMER_H_ */
