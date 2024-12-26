@@ -159,6 +159,7 @@ void GeneralTimer::setCounterValue(uint32_t value) {
 
 void GeneralTimer::start() {
   _timer->CR1 |= TIM_CR1_CEN; // Enable the timer
+  _timer->EGR |= TIM_EGR_UG;
 }
 
 void GeneralTimer::stop() {
