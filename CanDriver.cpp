@@ -23,16 +23,13 @@ CanDriver::CanDriver(CAN_TypeDef* canInstance, Mode mode, uint32_t baudRate)
   : _canInstance(canInstance), _mode(mode), _baudRate(baudRate) {
 
   enableClock();
+  configurePins();
 }
 
 void CanDriver::enableClock() {
-  if (_canInstance == CAN1) {
-    __HAL_RCC_CAN1_CLK_ENABLE();
-  } else if (_canInstance == CAN2) {
-    __HAL_RCC_CAN2_CLK_ENABLE();
-  } else {
-    return; // Unsupported CAN instance
-  }
+  if      (_canInstance == CAN1) __HAL_RCC_CAN1_CLK_ENABLE();
+  else if (_canInstance == CAN2) __HAL_RCC_CAN2_CLK_ENABLE();
+  else return; // Unsupported CAN instance
 }
 
 void CanDriver::configurePins() {
@@ -52,12 +49,26 @@ void CanDriver::configurePins() {
   }
 }
 
-void CanDriver::configureCAN(uint32_t prescaler, uint32_t mode, uint32_t sjw, uint32_t bs1, uint32_t bs2) {
-  _canInstance->MCR |= CAN_MCR_INRQ; // Request initialization
+void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32_t bs1, uint32_t bs2) {
+  // Request initialization mode
+  _canInstance->MCR |= CAN_MCR_INRQ;
   while ((_canInstance->MSR & CAN_MSR_INAK) == 0);
 
-  _canInstance->BTR = (sjw << 24) | (bs1 << 16) | (bs2 << 20) | (mode << 30) | (prescaler - 1);
+  // Reset BTR configuration
+  _canInstance->BTR = 0;
 
-  _canInstance->MCR &= ~CAN_MCR_INRQ; // Exit initialization mode
+  // Enable CAN1 peripheral
+  _canInstance->BTR |= ((sjw - 1) << CAN_BTR_SJW_Pos) |
+                       ((bs1 - 1) << CAN_BTR_TS1_Pos) |
+                       ((bs2 - 1) << CAN_BTR_TS2_Pos) |
+                       ((prescaler - 1) << CAN_BTR_BRP_Pos) |
+                       (static_cast<uint32_t>(mode) << CAN_BTR_LBKM_Pos);
+
+  // Enable CAN1 peripheral
+//  _canInstance->MCR &= ~CAN_MCR_SLEEP;
+//  while ((CAN1->MSR & CAN_MSR_SLAK)!=0U);
+
+  // Exit initialization mode
+  _canInstance->MCR &= ~CAN_MCR_INRQ;
   while ((_canInstance->MSR & CAN_MSR_INAK) != 0);
 }

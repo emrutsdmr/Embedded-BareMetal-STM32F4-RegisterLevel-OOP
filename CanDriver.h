@@ -30,7 +30,7 @@ public:
   CanDriver(CAN_TypeDef* canInstance, Mode mode = Mode::Normal, uint32_t baudRate = DEFAULT_BAUD_RATE);
 
   void configurePins();
-  void configureCAN(uint32_t prescaler, uint32_t mode, uint32_t sjw, uint32_t bs1, uint32_t bs2);
+  void configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32_t bs1, uint32_t bs2);
 
 private:
   CAN_TypeDef* _canInstance;
@@ -39,7 +39,7 @@ private:
 
   static constexpr uint32_t DEFAULT_BAUD_RATE = 500000; // Default 500 kbps
 
-  void enableClock();         // Enable the CAN peripheral's clock
+  void enableClock(); // Enable the CAN peripheral's clock
 
   // Static map for CAN GPIO pin mapping
   static const std::map<CAN_TypeDef*, std::vector<CanPinConfig>> canPinMap;
