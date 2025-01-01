@@ -56,7 +56,7 @@ void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32
 
   // Enable CAN peripheral
   _canInstance->MCR &= ~CAN_MCR_SLEEP;
-  while ((CAN1->MSR & CAN_MSR_SLAK)!=0U);
+  while ((_canInstance->MSR & CAN_MSR_SLAK)!=0U);
 
   // Reset BTR configuration
   _canInstance->BTR = 0;
@@ -69,31 +69,61 @@ void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32
                        (static_cast<uint32_t>(mode) << CAN_BTR_LBKM_Pos);
 }
 
-void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t id, uint32_t mask) {
+uint32_t CanDriver::encode32BitFilter(uint32_t value) const {
+  return (value & 0x1FFFFFFF) << 3; // Mask to 29 bits and shift
+}
+
+// Helper function to encode a 16-bit filter value (split into two halves)
+std::pair<uint32_t, uint32_t> CanDriver::encode16BitFilter(uint32_t id, uint32_t mask) const {
+  uint32_t fr1 = ((id & 0x7FF) << 5) | ((mask & 0x7FF) << 21); // Lower halves
+  uint32_t fr2 = (((id >> 11) & 0x7FF) << 5) | (((mask >> 11) & 0x7FF) << 21); // Upper halves
+  return {fr1, fr2};
+}
+
+void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t id, uint32_t mask,
+                                uint8_t fifo = 0, bool isIdentifierList = false, bool is32Bit = true) {
   // Enable filter initialization mode
   _canInstance->FMR |= CAN_FMR_FINIT;
 
   // Configure the filter bank start for CAN2
-  _canInstance->FMR &= ~(CAN_FMR_CAN2SB_Msk);
-  _canInstance->FMR |= (startBank << CAN_FMR_CAN2SB_Pos); // Example value
+  if (_canInstance == CAN2) {
+    _canInstance->FMR &= ~(CAN_FMR_CAN2SB_Msk);
+    _canInstance->FMR |= (startBank << CAN_FMR_CAN2SB_Pos);
+  }
 
-  // Deactivate the specified filter bank
+  // Configure the filter scale
+  if (is32Bit) {
+    _canInstance->FS1R |= (1U << filterBank); // Set filter scale to 32-bit
+  } else {
+    _canInstance->FS1R &= ~(1U << filterBank); // Set filter scale to 16-bit
+  }
+
+  // Configure the identifier mode
+  if (isIdentifierList) {
+    _canInstance->FM1R |= (1U << filterBank); // Identifier list mode
+  } else {
+    _canInstance->FM1R &= ~(1U << filterBank); // Identifier mask mode
+  }
+
+  // Assign the filter to the selected FIFO
+  if (fifo == 1) {
+    _canInstance->FFA1R |= (1U << filterBank); // Assign to FIFO 1
+  } else {
+    _canInstance->FFA1R &= ~(1U << filterBank); // Assign to FIFO 0
+  }
+
+  // Deactivate the filter bank before configuring it
   _canInstance->FA1R &= ~(1U << filterBank);
 
-  // Set filter scale to 32-bit
-  _canInstance->FS1R |= (1U << filterBank);
-//  _canInstance->FS1R &= ~(1U << filterBank); // Set filter scale to 16-bit
-
-  // Set identifier mask mode
-  _canInstance->FM1R &= ~(1U << filterBank);
-//  _canInstance->FM1R |= (1U << filterBank); // Set identifier list mode
-
-  // Set filter identifier and mask
-  _canInstance->sFilterRegister[filterBank].FR1 = (id << 5) << 16;
-  _canInstance->sFilterRegister[filterBank].FR2 = (mask << 5) << 16;
-
-  // Assign filter to FIFO 0
-  _canInstance->FFA1R &= ~(1U << filterBank);
+  // Configure the filter's identifier and mask
+  if (is32Bit) {
+    _canInstance->sFilterRegister[filterBank].FR1 = encode32BitFilter(id);
+    _canInstance->sFilterRegister[filterBank].FR2 = encode32BitFilter(mask);
+  } else {
+    auto [fr1, fr2] = encode16BitFilter(id, mask);
+    _canInstance->sFilterRegister[filterBank].FR1 = fr1;
+    _canInstance->sFilterRegister[filterBank].FR2 = fr2;
+  }
 
   // Activate the filter
   _canInstance->FA1R |= (1U << filterBank);
@@ -104,6 +134,6 @@ void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t 
 
 void CanDriver::start() {
   // Leave Initialization mode
-  CAN1->MCR &= ~CAN_MCR_INRQ;
-  while (CAN1->MSR & CAN_MSR_INAK);
+  _canInstance->MCR &= ~CAN_MCR_INRQ;
+  while (_canInstance->MSR & CAN_MSR_INAK);
 }
