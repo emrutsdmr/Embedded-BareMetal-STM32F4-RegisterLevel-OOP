@@ -81,7 +81,7 @@ std::pair<uint32_t, uint32_t> CanDriver::encode16BitFilter(uint32_t id, uint32_t
 }
 
 void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t id, uint32_t mask,
-                                uint8_t fifo = 0, bool isIdentifierList = false, bool is32Bit = true) {
+                                uint8_t fifo, bool isIdentifierList, bool is32Bit) {
   // Enable filter initialization mode
   _canInstance->FMR |= CAN_FMR_FINIT;
 
