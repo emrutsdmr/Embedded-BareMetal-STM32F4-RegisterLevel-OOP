@@ -54,21 +54,56 @@ void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32
   _canInstance->MCR |= CAN_MCR_INRQ;
   while ((_canInstance->MSR & CAN_MSR_INAK) == 0);
 
+  // Enable CAN peripheral
+  _canInstance->MCR &= ~CAN_MCR_SLEEP;
+  while ((CAN1->MSR & CAN_MSR_SLAK)!=0U);
+
   // Reset BTR configuration
   _canInstance->BTR = 0;
 
-  // Enable CAN1 peripheral
+  // Configure CAN bit timing register
   _canInstance->BTR |= ((sjw - 1) << CAN_BTR_SJW_Pos) |
                        ((bs1 - 1) << CAN_BTR_TS1_Pos) |
                        ((bs2 - 1) << CAN_BTR_TS2_Pos) |
                        ((prescaler - 1) << CAN_BTR_BRP_Pos) |
                        (static_cast<uint32_t>(mode) << CAN_BTR_LBKM_Pos);
+}
 
-  // Enable CAN1 peripheral
-//  _canInstance->MCR &= ~CAN_MCR_SLEEP;
-//  while ((CAN1->MSR & CAN_MSR_SLAK)!=0U);
+void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t id, uint32_t mask) {
+  // Enable filter initialization mode
+  _canInstance->FMR |= CAN_FMR_FINIT;
 
-  // Exit initialization mode
-  _canInstance->MCR &= ~CAN_MCR_INRQ;
-  while ((_canInstance->MSR & CAN_MSR_INAK) != 0);
+  // Configure the filter bank start for CAN2
+  _canInstance->FMR &= ~(CAN_FMR_CAN2SB_Msk);
+  _canInstance->FMR |= (startBank << CAN_FMR_CAN2SB_Pos); // Example value
+
+  // Deactivate the specified filter bank
+  _canInstance->FA1R &= ~(1U << filterBank);
+
+  // Set filter scale to 32-bit
+  _canInstance->FS1R |= (1U << filterBank);
+//  _canInstance->FS1R &= ~(1U << filterBank); // Set filter scale to 16-bit
+
+  // Set identifier mask mode
+  _canInstance->FM1R &= ~(1U << filterBank);
+//  _canInstance->FM1R |= (1U << filterBank); // Set identifier list mode
+
+  // Set filter identifier and mask
+  _canInstance->sFilterRegister[filterBank].FR1 = (id << 5) << 16;
+  _canInstance->sFilterRegister[filterBank].FR2 = (mask << 5) << 16;
+
+  // Assign filter to FIFO 0
+  _canInstance->FFA1R &= ~(1U << filterBank);
+
+  // Activate the filter
+  _canInstance->FA1R |= (1U << filterBank);
+
+  // Exit filter initialization mode
+  _canInstance->FMR &= ~CAN_FMR_FINIT;
+}
+
+void CanDriver::start() {
+  // Leave Initialization mode
+  CAN1->MCR &= ~CAN_MCR_INRQ;
+  while (CAN1->MSR & CAN_MSR_INAK);
 }
