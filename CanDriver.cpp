@@ -137,3 +137,63 @@ void CanDriver::start() {
   _canInstance->MCR &= ~CAN_MCR_INRQ;
   while (_canInstance->MSR & CAN_MSR_INAK);
 }
+
+void CanDriver::sendMessage(TxFrame *frame )
+{
+  // Wait until the transmit mailbox is empty
+  while ((_canInstance->TSR & CAN_TSR_TME0) == 0);
+
+  // Set the standard identifier and data length
+  _canInstance->sTxMailBox[0].TIR &= ~CAN_TI0R_STID;
+
+  // Configure the transmit mailbox identifier
+  _canInstance->sTxMailBox[0].TIR |= (frame->identifier << 21);
+
+  // Configure data length
+  _canInstance->sTxMailBox[0].TDTR |= (frame->length << 0);
+
+  _canInstance->sTxMailBox[0].TDLR=
+          ((uint32_t)frame->data[3] << CAN_TDL0R_DATA3_Pos) |
+          ((uint32_t)frame->data[2] << CAN_TDL0R_DATA2_Pos) |
+          ((uint32_t)frame->data[1] << CAN_TDL0R_DATA1_Pos) |
+          ((uint32_t)frame->data[0] << CAN_TDL0R_DATA0_Pos);
+
+  _canInstance->sTxMailBox[0].TDHR=
+          ((uint32_t)frame->data[7] << CAN_TDH0R_DATA7_Pos) |
+          ((uint32_t)frame->data[6] << CAN_TDH0R_DATA6_Pos) |
+          ((uint32_t)frame->data[5] << CAN_TDH0R_DATA5_Pos) |
+          ((uint32_t)frame->data[4] << CAN_TDH0R_DATA4_Pos);
+
+  // Set the TXRQ bit to request transmission
+  _canInstance->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+}
+
+void CanDriver::receiveMessage(RxFrame *frame)
+{
+  if (_canInstance->RF0R & CAN_RF0R_FMP0) { // Check if there's a pending message in FIFO0
+    // Read the received identifier
+    frame->identifier = (_canInstance->sFIFOMailBox[0].RIR >> 3) & 0x1FFFFFFF;
+
+    // Read the data length
+    frame->length = _canInstance->sFIFOMailBox[0].RDTR & 0x0F;
+
+    /*Clear old data*/
+    for (int i=0;i<8;i++)
+      frame->data[i]=0;
+
+    frame->data[0]=_canInstance->sFIFOMailBox[0].RDLR >>CAN_RDL0R_DATA0_Pos;
+    frame->data[1]=_canInstance->sFIFOMailBox[0].RDLR >>CAN_RDL0R_DATA1_Pos;
+    frame->data[2]=_canInstance->sFIFOMailBox[0].RDLR >>CAN_RDL0R_DATA2_Pos;
+    frame->data[3]=_canInstance->sFIFOMailBox[0].RDLR >>CAN_RDL0R_DATA3_Pos;
+
+    frame->data[4]=_canInstance->sFIFOMailBox[0].RDHR >>CAN_RDH0R_DATA4_Pos;
+    frame->data[5]=_canInstance->sFIFOMailBox[0].RDHR >>CAN_RDH0R_DATA5_Pos;
+    frame->data[6]=_canInstance->sFIFOMailBox[0].RDHR >>CAN_RDH0R_DATA6_Pos;
+    frame->data[7]=_canInstance->sFIFOMailBox[0].RDHR >>CAN_RDH0R_DATA7_Pos;
+
+    // Release the FIFO (not necessary for FIFO0)
+    _canInstance->RF0R |= CAN_RF0R_RFOM0;
+
+    GPIOA->ODR^=GPIO_ODR_OD5;
+  }
+}

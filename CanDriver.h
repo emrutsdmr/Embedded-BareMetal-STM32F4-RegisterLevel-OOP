@@ -46,6 +46,8 @@ public:
   void configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t id, uint32_t mask,
                        uint8_t fifo = 0, bool isIdentifierList = false, bool is32Bit = true);
   void start();
+  void receiveMessage(RxFrame *frame);
+  void sendMessage(TxFrame *frame );
 
 private:
   CAN_TypeDef* _canInstance;
