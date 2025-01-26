@@ -29,6 +29,9 @@ public:
   virtual ~GPIODevice() = default;          // Virtual destructor for proper cleanup
   void configurePin(Mode mode, OutputType outputType, Speed speed, Pull pull, uint8_t alternateFunction = 0); // Generalized configuration
 
+  // New methods
+  void write(bool value);   // Write a value to the GPIO pin
+  bool read() const;        // Read the value of the GPIO pin
 
 protected:
   GPIO_TypeDef* _port;

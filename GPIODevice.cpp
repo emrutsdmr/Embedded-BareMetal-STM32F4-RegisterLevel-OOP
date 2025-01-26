@@ -134,6 +134,21 @@ void GPIODevice::setPull(Pull pull)
     _port->PUPDR |= (3UL << (_currentPin * 2)); // Pull-down
   }
 }
+
+void GPIODevice::write(bool value)
+{
+  if (value) {
+    _port->ODR |= (1UL << _currentPin); // Set the pin high
+  } else {
+    _port->ODR &= ~(1UL << _currentPin); // Set the pin low
+  }
+}
+
+bool GPIODevice::read() const
+{
+  return (_port->IDR & (1UL << _currentPin)) != 0; // Return true if the pin is high, false otherwise
+}
+
 //GPIODevice::GPIODevice() {
 //	// TODO Auto-generated constructor stub
 //
