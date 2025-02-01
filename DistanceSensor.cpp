@@ -41,3 +41,48 @@ void DistanceSensor::delayMicroseconds(uint32_t us) {
     TIM1->SR &= ~1; // Clear UIF flag
   }
 }
+
+uint32_t DistanceSensor::readEcho(uint32_t timeout) {
+  uint32_t duration = 0;
+
+  // Wait for echo to go high
+  while (!echoPin.read()) {
+    duration++;
+    delayMicroseconds(1);
+    if (duration > timeout) {
+      return 0; // Timeout
+    }
+  }
+
+  duration = 0;
+
+  // Wait for echo to go low
+  while (echoPin.read()) {
+    duration++;
+    delayMicroseconds(1);
+    if (duration > timeout) {
+      return 0; // Timeout
+    }
+  }
+
+  return duration;
+}
+
+float DistanceSensor::measureDistance(uint32_t timeout) {
+  // Trigger the sensor
+  trigPin.write(true);  // Trigger high
+  delayMicroseconds(10);   // 10 µs pulse
+  trigPin.write(false); // Trigger low
+
+  // Read echo and calculate distance
+  uint32_t duration = readEcho(timeout);
+  if (duration == 0) {
+    return -1; // Indicate timeout
+  }
+  return duration / 58.0f; // Distance in cm
+}
+
+void DistanceSensor::wait(uint32_t ms) {
+  delayMilliseconds(ms);
+}
+
