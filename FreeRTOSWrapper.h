@@ -8,6 +8,11 @@
 #ifndef SRC_FREERTOSWRAPPER_H_
 #define SRC_FREERTOSWRAPPER_H_
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
 namespace FreeRTOS {
 
 // Task Wrapper
