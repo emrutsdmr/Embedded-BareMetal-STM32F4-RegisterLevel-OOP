@@ -35,5 +35,18 @@ private:
   UBaseType_t priority;
 };
 
+// Semaphore Wrapper
+class Semaphore {
+public:
+  Semaphore();
+  ~Semaphore();
+
+  bool take(TickType_t ticksToWait = portMAX_DELAY);
+  void give();
+
+private:
+  SemaphoreHandle_t handle;
+};
+
 }
 #endif /* SRC_FREERTOSWRAPPER_H_ */

@@ -31,3 +31,24 @@ void Task::taskFunction(void* pvParameters) {
   instance->run();
 }
 
+// Semaphore Implementation
+Semaphore::Semaphore() {
+  handle = xSemaphoreCreateBinary();
+}
+
+Semaphore::~Semaphore() {
+  if (handle != nullptr) {
+    vSemaphoreDelete(handle);
+  }
+}
+
+bool Semaphore::take(TickType_t ticksToWait) {
+  return (handle != nullptr) && (xSemaphoreTake(handle, ticksToWait) == pdTRUE);
+}
+
+void Semaphore::give() {
+  if (handle != nullptr) {
+    xSemaphoreGive(handle);
+  }
+}
+
