@@ -48,5 +48,18 @@ private:
   SemaphoreHandle_t handle;
 };
 
+// Mutex Wrapper
+class Mutex {
+public:
+  Mutex();
+  ~Mutex();
+
+  bool lock(TickType_t ticksToWait = portMAX_DELAY);
+  void unlock();
+
+private:
+  SemaphoreHandle_t handle;
+};
+
 }
 #endif /* SRC_FREERTOSWRAPPER_H_ */

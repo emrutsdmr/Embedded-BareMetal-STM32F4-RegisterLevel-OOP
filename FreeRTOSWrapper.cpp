@@ -52,3 +52,24 @@ void Semaphore::give() {
   }
 }
 
+// Mutex Implementation
+Mutex::Mutex() {
+  handle = xSemaphoreCreateMutex();
+}
+
+Mutex::~Mutex() {
+  if (handle != nullptr) {
+    vSemaphoreDelete(handle);
+  }
+}
+
+bool Mutex::lock(TickType_t ticksToWait) {
+  return (handle != nullptr) && (xSemaphoreTake(handle, ticksToWait) == pdTRUE);
+}
+
+void Mutex::unlock() {
+  if (handle != nullptr) {
+    xSemaphoreGive(handle);
+  }
+}
+
