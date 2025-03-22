@@ -61,5 +61,19 @@ private:
   SemaphoreHandle_t handle;
 };
 
+// Queue Wrapper
+template <typename T>
+class Queue {
+public:
+  explicit Queue(size_t length);
+  ~Queue();
+
+  bool send(const T& item, TickType_t ticksToWait = portMAX_DELAY);
+  bool receive(T& item, TickType_t ticksToWait = portMAX_DELAY);
+
+private:
+  QueueHandle_t handle;
+};
+
 }
 #endif /* SRC_FREERTOSWRAPPER_H_ */

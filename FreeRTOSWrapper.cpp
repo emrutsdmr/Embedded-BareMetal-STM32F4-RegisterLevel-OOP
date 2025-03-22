@@ -73,3 +73,26 @@ void Mutex::unlock() {
   }
 }
 
+// Queue Implementation
+template <typename T>
+Queue<T>::Queue(size_t length) {
+  handle = xQueueCreate(length, sizeof(T));
+}
+
+template <typename T>
+Queue<T>::~Queue() {
+  if (handle != nullptr) {
+    vQueueDelete(handle);
+  }
+}
+
+template <typename T>
+bool Queue<T>::send(const T& item, TickType_t ticksToWait) {
+  return (handle != nullptr) && (xQueueSend(handle, &item, ticksToWait) == pdPASS);
+}
+
+template <typename T>
+bool Queue<T>::receive(T& item, TickType_t ticksToWait) {
+  return (handle != nullptr) && (xQueueReceive(handle, &item, ticksToWait) == pdPASS);
+}
+
