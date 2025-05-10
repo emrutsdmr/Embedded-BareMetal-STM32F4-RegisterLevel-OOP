@@ -10,6 +10,8 @@
 
 #include "stm32f4xx_hal.h"
 #include "GPIODevice.h"
+#include <map>
+#include <vector>
 
 class CanDriver {
 public:
@@ -51,8 +53,8 @@ public:
 
 private:
   CAN_TypeDef* _canInstance;
-  uint32_t _baudRate;
   Mode _mode;
+  uint32_t _baudRate;
 
   static constexpr uint32_t DEFAULT_BAUD_RATE = 500000; // Default 500 kbps
 
