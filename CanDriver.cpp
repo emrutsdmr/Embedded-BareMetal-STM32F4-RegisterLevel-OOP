@@ -27,6 +27,10 @@ CanDriver::CanDriver(CAN_TypeDef* canInstance, Mode mode, uint32_t baudRate)
 }
 
 void CanDriver::enableClock() {
+
+//  __HAL_RCC_CAN1_FORCE_RESET();
+//  __HAL_RCC_CAN1_RELEASE_RESET();
+
   if      (_canInstance == CAN1) __HAL_RCC_CAN1_CLK_ENABLE();
   else if (_canInstance == CAN2) __HAL_RCC_CAN2_CLK_ENABLE();
   else return; // Unsupported CAN instance
@@ -61,12 +65,29 @@ void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32
   // Reset BTR configuration
   _canInstance->BTR = 0;
 
+  //Set mode
+  switch (mode) {
+    case Mode::Loopback:
+      _canInstance->BTR |= CAN_BTR_LBKM;
+      break;
+    case Mode::Silent:
+      _canInstance->BTR |= CAN_BTR_SILM;
+      break;
+    case Mode::SilentLoopback:
+      _canInstance->BTR |= CAN_BTR_LBKM | CAN_BTR_SILM;
+      break;
+    case Mode::Normal:
+    default:
+      // Do nothing: both bits remain 0
+      break;
+  }
+
   // Configure CAN bit timing register
   _canInstance->BTR |= ((sjw - 1) << CAN_BTR_SJW_Pos) |
                        ((bs1 - 1) << CAN_BTR_TS1_Pos) |
                        ((bs2 - 1) << CAN_BTR_TS2_Pos) |
-                       ((prescaler - 1) << CAN_BTR_BRP_Pos) |
-                       (static_cast<uint32_t>(mode) << CAN_BTR_LBKM_Pos);
+                       ((prescaler - 1) << CAN_BTR_BRP_Pos);
+//                      | (static_cast<uint32_t>(mode) << CAN_BTR_LBKM_Pos);
 }
 
 uint32_t CanDriver::encode32BitFilter(uint32_t value) const {
