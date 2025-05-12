@@ -19,8 +19,8 @@ const std::map<CAN_TypeDef*, std::vector<CanDriver::CanPinConfig>> CanDriver::ca
   }}
 };
 
-CanDriver::CanDriver(CAN_TypeDef* canInstance, Mode mode, uint32_t baudRate)
-  : _canInstance(canInstance), _mode(mode), _baudRate(baudRate) {
+CanDriver::CanDriver(CAN_TypeDef* canInstance, uint32_t baudRate)
+  : _canInstance(canInstance), _baudRate(baudRate) {
 
   enableClock();
   configurePins();
@@ -66,6 +66,7 @@ void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32
   _canInstance->BTR = 0;
 
   //Set mode
+  _mode = mode;
   switch (mode) {
     case Mode::Loopback:
       _canInstance->BTR |= CAN_BTR_LBKM;

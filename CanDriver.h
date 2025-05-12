@@ -41,7 +41,7 @@ public:
     uint8_t data[8];
   };
 
-  CanDriver(CAN_TypeDef* canInstance, Mode mode = Mode::Normal, uint32_t baudRate = DEFAULT_BAUD_RATE);
+  CanDriver(CAN_TypeDef* canInstance, uint32_t baudRate = DEFAULT_BAUD_RATE);
 
   void configurePins();
   void configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32_t bs1, uint32_t bs2);
