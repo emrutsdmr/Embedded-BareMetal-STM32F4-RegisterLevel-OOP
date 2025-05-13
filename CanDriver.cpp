@@ -28,9 +28,6 @@ CanDriver::CanDriver(CAN_TypeDef* canInstance, uint32_t baudRate)
 
 void CanDriver::enableClock() {
 
-//  __HAL_RCC_CAN1_FORCE_RESET();
-//  __HAL_RCC_CAN1_RELEASE_RESET();
-
   if      (_canInstance == CAN1) __HAL_RCC_CAN1_CLK_ENABLE();
   else if (_canInstance == CAN2) __HAL_RCC_CAN2_CLK_ENABLE();
   else return; // Unsupported CAN instance
@@ -54,17 +51,14 @@ void CanDriver::configurePins() {
 }
 
 void CanDriver::configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32_t bs1, uint32_t bs2) {
-  // Request initialization mode
+  // Enter the initialization mode
+  _canInstance->MCR &= ~CAN_MCR_SLEEP;
   _canInstance->MCR |= CAN_MCR_INRQ;
   while ((_canInstance->MSR & CAN_MSR_INAK) == 0);
 
-  // Enable CAN peripheral
-  _canInstance->MCR &= ~CAN_MCR_SLEEP;
-  while ((_canInstance->MSR & CAN_MSR_SLAK)!=0U);
-
-  // Reset BTR configuration
+  //Reset the non-zero initial values
+//  _canInstance->BTR &= ~(CAN_BTR_TS1_Msk | CAN_BTR_TS2_Msk | CAN_BTR_SJW_Msk | CAN_BTR_BRP_Msk);
   _canInstance->BTR = 0;
-
   //Set mode
   _mode = mode;
   switch (mode) {
@@ -157,7 +151,6 @@ void CanDriver::configureFilter(uint8_t filterBank, uint8_t startBank, uint32_t 
 void CanDriver::start() {
   // Leave Initialization mode
   _canInstance->MCR &= ~CAN_MCR_INRQ;
-  while (_canInstance->MSR & CAN_MSR_INAK);
 }
 
 void CanDriver::sendMessage(TxFrame *frame )
@@ -172,7 +165,8 @@ void CanDriver::sendMessage(TxFrame *frame )
   _canInstance->sTxMailBox[0].TIR |= (frame->identifier << 21);
 
   // Configure data length
-  _canInstance->sTxMailBox[0].TDTR |= (frame->length << 0);
+  _canInstance->sTxMailBox[0].TDTR = frame->length & 0x0F;
+
 
   _canInstance->sTxMailBox[0].TDLR=
           ((uint32_t)frame->data[3] << CAN_TDL0R_DATA3_Pos) |
@@ -194,8 +188,7 @@ void CanDriver::receiveMessage(RxFrame *frame)
 {
   if (_canInstance->RF0R & CAN_RF0R_FMP0) { // Check if there's a pending message in FIFO0
     // Read the received identifier
-    frame->identifier = (_canInstance->sFIFOMailBox[0].RIR >> 3) & 0x1FFFFFFF;
-
+    frame->identifier = (uint32_t)0x000007FF & (_canInstance->sFIFOMailBox[0].RIR >> 21);
     // Read the data length
     frame->length = _canInstance->sFIFOMailBox[0].RDTR & 0x0F;
 
