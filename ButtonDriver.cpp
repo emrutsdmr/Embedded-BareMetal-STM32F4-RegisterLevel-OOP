@@ -10,7 +10,7 @@
 
 LedDriver led(GPIOA, 5);
 
-static ButtonDriver* instance = nullptr;
+static ButtonDriver* pinToInstance[16] = {nullptr};
 
 ButtonDriver::ButtonDriver(GPIO_TypeDef* port)
     : GPIODevice(port, 13) {}  // Default pin 13
@@ -19,7 +19,7 @@ ButtonDriver::ButtonDriver(GPIO_TypeDef* port, uint16_t pin)
     : GPIODevice(port, pin)
 {
   configurePin(Mode::Input, OutputType::PushPull, Speed::Low, Pull::NoPull);  // Configure pin for button input
-  instance = this;  // Assign the instance pointer
+  pinToInstance[pin] = this;  // Map this instance to the pin
 }
 
 ButtonDriver::ButtonState ButtonDriver::getState(uint16_t pin) const
@@ -101,7 +101,8 @@ void ButtonDriver::BTN_IRQ_Handler()
     if (currentTime - lastPressTime > 50) {  // 50ms debounce threshold
       lastPressTime = currentTime;  // Update last press time
 
-      if (instance->getState() == ButtonState::ON) {  // Check the button state after debounce
+      ButtonDriver* inst = pinToInstance[pin];
+      if (inst->getState() == ButtonState::ON) {  // Check the button state after debounce
 
         led.toggle();  // Toggle the LED or perform other actions
 
