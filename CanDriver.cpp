@@ -19,9 +19,8 @@ const std::map<CAN_TypeDef*, std::vector<CanDriver::CanPinConfig>> CanDriver::ca
   }}
 };
 
-CanDriver::CanDriver(CAN_TypeDef* canInstance, uint32_t baudRate)
-  : _canInstance(canInstance), _baudRate(baudRate) {
-
+CanDriver::CanDriver(CAN_TypeDef* canInstance) {
+  _canInstance = canInstance;
   enableClock();
   configurePins();
 }

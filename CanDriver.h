@@ -41,7 +41,7 @@ public:
     uint8_t data[8];
   };
 
-  CanDriver(CAN_TypeDef* canInstance, uint32_t baudRate = DEFAULT_BAUD_RATE);
+  CanDriver(CAN_TypeDef* canInstance);
 
   void configurePins();
   void configureCAN(uint32_t prescaler, Mode mode, uint32_t sjw, uint32_t bs1, uint32_t bs2);
@@ -54,9 +54,6 @@ public:
 private:
   CAN_TypeDef* _canInstance;
   Mode _mode;
-  uint32_t _baudRate;
-
-  static constexpr uint32_t DEFAULT_BAUD_RATE = 500000; // Default 500 kbps
 
   void enableClock(); // Enable the CAN peripheral's clock
 
