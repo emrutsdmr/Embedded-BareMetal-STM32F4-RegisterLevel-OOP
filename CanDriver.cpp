@@ -211,3 +211,66 @@ void CanDriver::receiveMessage(RxFrame *frame)
     GPIOA->ODR^=GPIO_ODR_OD5;
   }
 }
+
+void CanDriver::enableInterrupt(RxCallback cb, uint8_t fifo, uint32_t priority) {
+  _rxCallback = cb;
+  _rxFifo = fifo;
+
+  if (fifo == 0) {
+    _canInstance->IER |= CAN_IER_FMPIE0;
+    if (_canInstance == CAN1){
+      NVIC_SetPriority(CAN1_RX0_IRQn, priority);
+      HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+    }
+    else if (_canInstance == CAN2){
+      NVIC_SetPriority(CAN2_RX0_IRQn, priority);
+      HAL_NVIC_EnableIRQ(CAN2_RX0_IRQn);
+    }
+  }
+  else {
+    _canInstance->IER |= CAN_IER_FMPIE1;
+    if (_canInstance == CAN1){
+      NVIC_SetPriority(CAN1_RX1_IRQn, priority);
+      HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
+    }
+    else if (_canInstance == CAN2){
+      NVIC_SetPriority(CAN2_RX1_IRQn, priority);
+      HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
+    }
+  }
+}
+
+void CanDriver::handleInterrupt() {
+  if (!_rxCallback) return;
+
+  RxFrame frame{};
+  if ((_rxFifo == 0 && (_canInstance->RF0R & CAN_RF0R_FMP0)) ||
+      (_rxFifo == 1 && (_canInstance->RF1R & CAN_RF1R_FMP1))) {
+
+    CAN_FIFOMailBox_TypeDef* mailbox = &_canInstance->sFIFOMailBox[_rxFifo];
+
+    frame.identifier = (mailbox->RIR >> 21) & 0x7FF;
+    frame.length = mailbox->RDTR & 0x0F;
+
+    uint32_t low = mailbox->RDLR;
+    uint32_t high = mailbox->RDHR;
+
+    for (int i = 0; i < 4; ++i) frame.data[i] = (low >> (i * 8)) & 0xFF;
+    for (int i = 0; i < 4; ++i) frame.data[i + 4] = (high >> (i * 8)) & 0xFF;
+
+    if (_rxFifo == 0) _canInstance->RF0R |= CAN_RF0R_RFOM0;
+    else              _canInstance->RF1R |= CAN_RF1R_RFOM1;
+
+    _rxCallback(frame);
+  }
+}
+
+extern "C" void CAN1_RX0_IRQHandler(void) {
+  extern CanDriver can1;
+  can1.handleInterrupt();
+}
+
+extern "C" void CAN2_RX0_IRQHandler(void) {
+  extern CanDriver can2;
+  can2.handleInterrupt();
+}

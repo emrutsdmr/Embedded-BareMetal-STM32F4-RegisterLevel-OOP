@@ -12,6 +12,7 @@
 #include "GPIODevice.h"
 #include <map>
 #include <vector>
+#include <functional>
 
 class CanDriver {
 public:
@@ -41,6 +42,8 @@ public:
     uint8_t data[8];
   };
 
+  using RxCallback = std::function<void(const RxFrame&)>;
+
   CanDriver(CAN_TypeDef* canInstance);
 
   void configurePins();
@@ -50,10 +53,14 @@ public:
   void start();
   void receiveMessage(RxFrame *frame);
   void sendMessage(TxFrame *frame );
+  void enableInterrupt(RxCallback cb, uint8_t fifo = 0, uint32_t priority = 5);
+  void handleInterrupt();  // Call from ISR
 
 private:
   CAN_TypeDef* _canInstance;
   Mode _mode;
+  RxCallback _rxCallback;
+  uint8_t _rxFifo = 0;
 
   void enableClock(); // Enable the CAN peripheral's clock
 
